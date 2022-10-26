@@ -8,7 +8,9 @@ class RestorableList<T : Any>(historySize: Int) : Iterable<T>, AdvancedList<T>, 
     override val size: Int
         get() = list.size
 
-    fun undoHistory() {}
+    fun undoHistory() {
+        list.add(hist.removeLast())
+    }
 
     override fun clear() = list.clear()
 
