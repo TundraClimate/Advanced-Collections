@@ -2,10 +2,13 @@ package io.github.tundraclimate.advc
 
 import io.github.tundraclimate.advc.iterator.AdvancedListIterator
 
-class RestorableList<T : Any> : Iterable<T>, AdvancedList<T>, MutableList<T> {
+class RestorableList<T : Any>(historySize: Int) : Iterable<T>, AdvancedList<T>, MutableList<T> {
     private val list = mutableListOf<T>()
+    private val hist = LimitedStash<T>(historySize)
     override val size: Int
         get() = list.size
+
+    fun undoHistory() {}
 
     override fun clear() = list.clear()
 
@@ -31,15 +34,26 @@ class RestorableList<T : Any> : Iterable<T>, AdvancedList<T>, MutableList<T> {
 
     override fun listIterator(index: Int): MutableListIterator<T> = AdvancedListIterator(list, index)
 
-    override fun removeAt(index: Int): T = list.removeAt(index)
+    override fun removeAt(index: Int): T {
+        hist.add(list[index])
+        return list.removeAt(index)
+    }
 
     override fun set(index: Int, element: T): T = list.set(index, element)
 
     override fun retainAll(elements: Collection<T>): Boolean = list.retainAll(elements)
 
-    override fun removeAll(elements: Collection<T>): Boolean = list.removeAll(elements)
+    override fun removeAll(elements: Collection<T>): Boolean {
+        for (e in elements) {
+            hist.add(list[list.indexOf(e)])
+        }
+        return list.removeAll(elements)
+    }
 
-    override fun remove(element: T): Boolean = list.remove(element)
+    override fun remove(element: T): Boolean {
+        hist.add(list[list.indexOf(element)])
+        return list.remove(element)
+    }
 
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<T> = list.subList(fromIndex, toIndex)
 
